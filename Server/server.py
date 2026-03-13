@@ -7,14 +7,30 @@ HOST = "0.0.0.0"
 PORT = 5000
 
 room_manager = RoomManager()
+
 clients = {}
 usernames = {}
+
+
+def receive_exact(sock, size):
+
+    data = b""
+
+    while len(data) < size:
+        packet = sock.recv(min(4096, size - len(data)))
+        if not packet:
+            break
+        data += packet
+
+    return data
+
 
 def handle_client(conn, addr):
 
     print(f"Connected: {addr}")
 
     try:
+
         conn.send("Enter username: ".encode())
         username = conn.recv(1024).decode().strip()
 
@@ -22,6 +38,7 @@ def handle_client(conn, addr):
         usernames[conn] = username
 
         while True:
+
             data = conn.recv(4096)
 
             if not data:
@@ -58,14 +75,19 @@ def handle_client(conn, addr):
                 filename = args[1]
                 size = int(args[2])
 
-                filedata = conn.recv(size)
+                print(f"Receiving file {filename} ({size} bytes)")
+
+                filedata = receive_exact(conn, size)
+
+                header = f"FILE|{filename}|{size}\n".encode()
 
                 for client in room_manager.rooms.get(room, []):
+
                     if client != conn:
-                        client.send(
-                            f"FILE|{filename}|{size}".encode()
-                        )
-                        client.send(filedata)
+
+                        client.send(header + filedata)
+
+                print("File forwarded")
 
             elif command == "LEAVE":
 
@@ -73,7 +95,7 @@ def handle_client(conn, addr):
                 room_manager.leave_room(room, conn)
 
     except Exception as e:
-        print(e)
+        print("Error:", e)
 
     finally:
 
@@ -86,6 +108,7 @@ def handle_client(conn, addr):
 def start_server():
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     server.bind((HOST, PORT))
     server.listen()
 
@@ -95,7 +118,11 @@ def start_server():
 
         conn, addr = server.accept()
 
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(
+            target=handle_client,
+            args=(conn, addr)
+        )
+
         thread.start()
 
 
