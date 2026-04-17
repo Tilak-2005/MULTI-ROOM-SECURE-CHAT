@@ -1,4 +1,7 @@
 import socket
+from datetime import datetime
+import time
+
 import ssl
 import threading
 from room_manager import RoomManager
@@ -75,6 +78,8 @@ def handle_client(conn, addr):
             elif command == "MSG":
                 room = args[0]
                 msg = args[1]
+
+                # ✅ Simple clean format
                 room_manager.broadcast(room, f"{username}: {msg}", conn)
 
             elif command == "PRIVATE":
