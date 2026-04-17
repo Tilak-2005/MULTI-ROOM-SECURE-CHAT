@@ -5,17 +5,18 @@ import tkinter as tk
 from tkinter import scrolledtext, filedialog, simpledialog
 import os
 
-HOST = "127.0.0.1"
+HOST = "10.30.201.228"
 PORT = 5000
 SSL_CERT = "server.crt"
 
 # ---------- SSL SETUP ----------
 def create_ssl_context():
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.load_verify_locations(SSL_CERT)
+
     context.check_hostname = False
-    context.verify_mode = ssl.CERT_REQUIRED
-    context.minimum_version = ssl.TLSVersion.TLSv1_2
+
+    context.verify_mode = ssl.CERT_NONE
+
     return context
 
 ssl_context = create_ssl_context()
